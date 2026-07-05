@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Percent Playground</title>
+<style>
+  /* Fully self-contained: no external fonts or scripts. Uses rounded system fonts. */
+  :root{
+    --ink:#2D2A5A;
+    --ink-soft:#5B577F;
+    --sun:#FFC244;
+    --melon:#FF6B6B;
+    --mint:#38D9A9;
+    --sky:#4DABF7;
+    --grape:#845EF7;
+    --cream:#FFF9EF;
+    --paper:#FFFFFF;
+    --line:#EDE6D6;
+    --shadow: 0 10px 30px rgba(45,42,90,.10);
+    --shadow-lg: 0 20px 50px rgba(45,42,90,.16);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Nunito',ui-rounded,'Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif;
+    background:
+      radial-gradient(1200px 600px at 10% -10%, #FFE9C7 0%, transparent 55%),
+      radial-gradient(1000px 700px at 110% 0%, #E4F7F0 0%, transparent 50%),
+      var(--cream);
+    color:var(--ink);
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    padding-bottom:80px;
+  }
+  h1,h2,h3,.disp{font-family:ui-rounded,'Fredoka','Segoe UI Rounded','Baloo 2',system-ui,-apple-system,'Trebuchet MS',sans-serif;font-weight:700;letter-spacing:-.01em}
+
+  /* ---------- top bar ---------- */
+  header{
+    position:sticky;top:0;z-index:50;
+    background:rgba(255,249,239,.82);
+    backdrop-filter:blur(12px);
+    border-bottom:2px solid var(--line);
+  }
+  .bar{max-width:1080px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .logo{display:flex;align-items:center;gap:10px;font-family:ui-rounded,'Fredoka','Segoe UI Rounded',system-ui,'Trebuchet MS',sans-serif;font-weight:700;font-size:1.35rem;color:var(--ink)}
+  .logo .pct{
+    width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:#fff;font-size:1.1rem;
+    background:linear-gradient(135deg,var(--melon),var(--sun));box-shadow:0 6px 14px rgba(255,107,107,.35)
+  }
+  nav{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+  .nav-btn{
+    font-family:'Nunito';font-weight:800;font-size:.86rem;border:none;cursor:pointer;
+    padding:8px 14px;border-radius:999px;background:transparent;color:var(--ink-soft);transition:.18s;
+  }
+  .nav-btn:hover{background:#fff;color:var(--ink)}
+  .nav-btn.active{background:var(--ink);color:#fff;box-shadow:var(--shadow)}
+
+  /* ---------- progress stars ---------- */
+  .stars{display:flex;align-items:center;gap:6px;font-weight:900;color:var(--ink);font-size:.9rem}
+  .stars .star{font-size:1.15rem;filter:grayscale(1) opacity(.35);transition:.3s}
+  .stars .star.on{filter:none;transform:scale(1.15)}
+
+  main{max-width:1080px;margin:0 auto;padding:26px 20px}
+  .page{display:none;animation:fade .4s ease}
+  .page.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  /* ---------- hero ---------- */
+  .hero{
+    background:var(--ink);color:#fff;border-radius:28px;padding:34px;position:relative;overflow:hidden;
+    box-shadow:var(--shadow-lg);
+  }
+  .hero::after{content:"";position:absolute;inset:0;background:
+    radial-gradient(340px 200px at 88% 20%, rgba(255,194,68,.35), transparent 60%),
+    radial-gradient(300px 200px at 10% 120%, rgba(56,217,169,.30), transparent 60%);pointer-events:none}
+  .hero .eyebrow{font-weight:900;letter-spacing:.14em;text-transform:uppercase;font-size:.72rem;color:var(--sun)}
+  .hero h1{font-size:clamp(2rem,5vw,3.1rem);line-height:1.02;margin:10px 0 8px}
+  .hero p{max-width:52ch;color:#D9D6F0;font-weight:600}
+  .hero .tag{display:inline-block;margin-top:6px;background:var(--melon);color:#fff;font-weight:800;font-size:.8rem;padding:5px 12px;border-radius:999px}
+
+  /* ---------- key metaphor: per 100 ---------- */
+  .metaphor{display:grid;grid-template-columns:1.05fr .95fr;gap:22px;margin-top:22px;align-items:stretch}
+  @media(max-width:760px){.metaphor{grid-template-columns:1fr}}
+  .card{background:var(--paper);border:2px solid var(--line);border-radius:24px;padding:24px;box-shadow:var(--shadow)}
+  .card h2{font-size:1.5rem;color:var(--ink)}
+  .card .lead{color:var(--ink-soft);font-weight:700;margin-top:4px}
+
+  /* hundred grid */
+  .grid100{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;margin-top:14px;max-width:320px}
+  .cell{aspect-ratio:1;border-radius:4px;background:#EFEBFB;transition:.02s;border:1px solid #E2DBF7}
+  .cell.on{background:var(--grape);border-color:var(--grape)}
+  .gridtools{display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap}
+  .readout{font-family:ui-rounded,'Fredoka','Segoe UI Rounded',system-ui,'Trebuchet MS',sans-serif;font-weight:700;font-size:1.6rem;color:var(--grape)}
+  .readout small{font-family:'Nunito';font-weight:800;font-size:.85rem;color:var(--ink-soft);display:block}
+  .chip{background:#F3EFFF;color:var(--grape);border:2px solid #E3D9FF;font-weight:800;border-radius:12px;padding:8px 12px;cursor:pointer;font-size:.85rem}
+  .chip:hover{background:var(--grape);color:#fff}
+
+  /* ---------- lesson cards ---------- */
+  .section-title{display:flex;align-items:baseline;gap:12px;margin:6px 0 18px}
+  .section-title h2{font-size:1.8rem}
+  .section-title .kicker{font-weight:900;color:var(--melon);text-transform:uppercase;letter-spacing:.1em;font-size:.75rem}
+
+  .lesson{background:var(--paper);border:2px solid var(--line);border-radius:24px;padding:0;box-shadow:var(--shadow);margin-bottom:18px;overflow:hidden}
+  .lesson-head{display:flex;align-items:center;gap:14px;padding:18px 22px;cursor:pointer;user-select:none}
+  .lesson-head:hover{background:#FFFBF3}
+  .l-num{flex:none;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;color:#fff;font-family:ui-rounded,'Fredoka','Segoe UI Rounded',system-ui,'Trebuchet MS',sans-serif;font-weight:700;font-size:1.2rem}
+  .l-title{font-family:ui-rounded,'Fredoka','Segoe UI Rounded',system-ui,'Trebuchet MS',sans-serif;font-weight:600;font-size:1.2rem;color:var(--ink);flex:1}
+  .l-sub{font-size:.82rem;color:var(--ink-soft);font-weight:700}
+  .caret{transition:.3s;color:var(--ink-soft);font-weight:900;font-size:1.2rem}
+  .lesson.open .caret{transform:rotate(90deg)}
+  .lesson-body{max-height:0;overflow:hidden;transition:max-height .45s ease}
+  .lesson.open .lesson-body{max-height:2600px}
+  .lb-inner{padding:4px 22px 24px}
+
+  .concept{background:#FFFBF3;border:2px dashed var(--line);border-radius:16px;padding:16px 18px;margin:12px 0}
+  .concept b{color:var(--ink)}
+  .steps{counter-reset:s;margin:12px 0;display:grid;gap:10px}
+  .step{display:flex;gap:12px;align-items:flex-start}
+  .step .n{counter-increment:s;flex:none;width:28px;height:28px;border-radius:50%;background:var(--ink);color:#fff;font-weight:900;display:grid;place-items:center;font-size:.85rem}
+  .step .n::before{content:counter(s)}
+  .step p{font-weight:600}
+  .worked{background:linear-gradient(135deg,#EEF6FF,#F3EFFF);border:2px solid #E1E7FF;border-radius:16px;padding:16px 18px;margin:12px 0}
+  .worked .ex-label{font-weight:900;color:var(--sky);text-transform:uppercase;font-size:.72rem;letter-spacing:.08em}
+  .math{font-family:ui-rounded,'Fredoka','Segoe UI Rounded',system-ui,'Trebuchet MS',sans-serif;font-weight:500;font-size:1.15rem;color:var(--ink);margin-top:6px;line-height:1.9}
+  .frac{display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;margin:0 3px;line-height:1.05}
+  .frac .top{border-bottom:2.5px solid var(--ink);padding:0 6px 2px}
+  .frac .bot{padding:2px 6px 0}
+  .hl{background:var(--sun);border-radius:6px;padding:1px 6px;font-weight:700}
+  .hl-m{background:#FFD9D9;border-radius:6px;padding:1px 6px;font-weight:700}
+  .hl-g{background:#D6F7EC;border-radius:6px;padding:1px 6px;font-weight:700}
+
+  /* try-it mini interactive */
+  .tryit{background:#fff;border:2px solid var(--mint);border-radius:16px;padding:16px 18px;margin-top:14px}
+  .tryit .ti-head{font-weight:900;color:#16a37a;text-transform:uppercase;font-size:.72rem;letter-spacing:.08em}
+  .slider-row{display:flex;align-items:center;gap:14px;margin-top:12px;flex-wrap:wrap}
+  input[type=range]{-webkit-appearance:none;height:10px;border-radius:999px;background:#E7E2D3;outline:none;flex:1;min-width:180px}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:var(--mint);border:4px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.2);cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:var(--mint);border:4px solid #fff;cursor:pointer}
+
+  /* pizza / bar viz */
+  .bar-viz{height:34px;border-radius:12px;background:#EFEBE0;overflow:hidden;margin-top:10px;border:2px solid var(--line)}
+  .bar-fill{height:100%;background:linear-gradient(90deg,var(--mint),var(--sky));width:0%;transition:.15s;display:flex;align-items:center;justify-content:flex-end;padding-right:10px;color:#fff;font-weight:900;font-size:.85rem}
+
+  /* ---------- quiz ---------- */
+  /* ---------- quiz picker ---------- */
+  .quiz-menu-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:16px}
+  @media(max-width:640px){.quiz-menu-grid{grid-template-columns:1fr}}
+  .qmenu{
+    display:flex;align-items:center;gap:14px;text-align:left;cursor:pointer;
+    background:var(--paper);border:2.5px solid var(--line);border-radius:20px;padding:16px 18px;
+    box-shadow:var(--shadow);transition:.16s;position:relative;overflow:hidden;color:var(--ink)
+  }
+  .qmenu:hover{transform:translateY(-3px);border-color:var(--ink)}
+  .qmenu .q-ico{flex:none;width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-size:1.6rem;color:#fff}
+  .qmenu .q-body{flex:1;min-width:0}
+  .qmenu .q-name{font-family:ui-rounded,'Fredoka','Segoe UI Rounded',system-ui,'Trebuchet MS',sans-serif;font-weight:700;font-size:1.12rem;line-height:1.1}
+  .qmenu .q-desc{font-size:.82rem;color:var(--ink-soft);font-weight:700;margin-top:2px}
+  .qmenu .q-tag{font-size:.72rem;font-weight:900;color:var(--ink-soft);margin-top:6px;display:flex;align-items:center;gap:8px}
+  .qmenu .q-star{font-size:1.35rem;filter:grayscale(1) opacity(.3);transition:.3s}
+  .qmenu.done .q-star{filter:none;transform:scale(1.1)}
+  .qmenu .best{background:#F3EFFF;color:var(--grape);border-radius:999px;padding:2px 9px;font-weight:900;font-size:.72rem}
+  .menu-total{margin-top:18px;text-align:center;font-weight:900;color:var(--ink);font-size:1.05rem;
+    background:linear-gradient(135deg,#FFF4E0,#F3EFFF);border:2px solid var(--line);border-radius:18px;padding:14px}
+  .menu-total .bar{height:12px;background:#EDE6D6;border-radius:999px;overflow:hidden;margin-top:10px;max-width:420px;margin-left:auto;margin-right:auto}
+  .menu-total .bar span{display:block;height:100%;background:linear-gradient(90deg,var(--sun),var(--melon));width:0%;transition:.5s}
+  .quiz-card{background:var(--paper);border:2px solid var(--line);border-radius:24px;padding:24px;box-shadow:var(--shadow)}
+  .q-meta{display:flex;justify-content:space-between;align-items:center;font-weight:800;color:var(--ink-soft);font-size:.85rem}
+  .q-badge{background:#F3EFFF;color:var(--grape);padding:5px 12px;border-radius:999px;font-size:.78rem;font-weight:900}
+  .q-text{font-family:ui-rounded,'Fredoka','Segoe UI Rounded',system-ui,'Trebuchet MS',sans-serif;font-weight:500;font-size:1.4rem;margin:14px 0 6px;line-height:1.35}
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+  @media(max-width:560px){.opts{grid-template-columns:1fr}}
+  .opt{
+    display:flex;align-items:center;gap:12px;padding:16px 18px;border-radius:16px;border:2.5px solid var(--line);
+    background:#fff;cursor:pointer;font-weight:800;font-size:1.05rem;transition:.15s;text-align:left;color:var(--ink)
+  }
+  .opt:hover{border-color:var(--ink);transform:translateY(-2px)}
+  .opt .key{width:30px;height:30px;flex:none;border-radius:9px;background:#F1EEE4;display:grid;place-items:center;font-family:ui-rounded,'Fredoka','Segoe UI Rounded',system-ui,'Trebuchet MS',sans-serif;font-weight:700;color:var(--ink-soft)}
+  .opt.correct{border-color:var(--mint);background:#E9FBF4}
+  .opt.correct .key{background:var(--mint);color:#fff}
+  .opt.wrong{border-color:var(--melon);background:#FFECEC}
+  .opt.wrong .key{background:var(--melon);color:#fff}
+  .opt.disabled{pointer-events:none;opacity:.85}
+  .feedback{margin-top:16px;padding:14px 16px;border-radius:14px;font-weight:700;display:none}
+  .feedback.show{display:block;animation:pop .3s}
+  @keyframes pop{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+  .feedback.good{background:#E9FBF4;color:#128a63;border:2px solid var(--mint)}
+  .feedback.bad{background:#FFECEC;color:#c0392b;border:2px solid var(--melon)}
+  .quiz-foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px}
+  .btn{font-family:ui-rounded,'Fredoka','Segoe UI Rounded',system-ui,'Trebuchet MS',sans-serif;font-weight:600;border:none;cursor:pointer;padding:12px 22px;border-radius:14px;font-size:1rem;transition:.15s}
+  .btn-primary{background:var(--ink);color:#fff;box-shadow:var(--shadow)}
+  .btn-primary:hover{transform:translateY(-2px)}
+  .btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none}
+  .btn-ghost{background:#fff;border:2px solid var(--line);color:var(--ink)}
+  .progress-track{height:10px;background:#EDE6D6;border-radius:999px;overflow:hidden;margin-top:6px}
+  .progress-bar{height:100%;background:linear-gradient(90deg,var(--sun),var(--melon));width:0%;transition:.4s}
+
+  .result{text-align:center;padding:20px}
+  .result .big{font-family:ui-rounded,'Fredoka','Segoe UI Rounded',system-ui,'Trebuchet MS',sans-serif;font-weight:700;font-size:3.4rem;color:var(--grape)}
+  .result .medal{font-size:4rem;margin-bottom:6px}
+
+  /* ---------- exercises / word problems ---------- */
+  .wp-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:760px){.wp-grid{grid-template-columns:1fr}}
+  .wp{background:var(--paper);border:2px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow)}
+  .wp .icon{font-size:1.8rem}
+  .wp h3{font-size:1.1rem;margin:8px 0 4px}
+  .wp p{font-weight:600;color:var(--ink-soft);font-size:.96rem}
+  .reveal-btn{margin-top:12px;background:#FFFBF3;border:2px dashed var(--sun);color:var(--ink);font-weight:800;border-radius:12px;padding:9px 14px;cursor:pointer;font-size:.85rem;width:100%}
+  .reveal-btn:hover{background:var(--sun)}
+  .answer{display:none;margin-top:10px;background:#E9FBF4;border:2px solid var(--mint);border-radius:12px;padding:12px 14px;font-weight:700;color:#0f7a58;font-size:.92rem}
+  .answer.show{display:block;animation:pop .3s}
+  .answer .math{font-size:1rem;color:#0f7a58}
+
+  /* teacher notes */
+  .note{background:#FFF4E0;border-left:6px solid var(--sun);border-radius:0 16px 16px 0;padding:16px 20px;margin-bottom:14px}
+  .note h3{font-size:1.05rem;color:var(--ink)}
+  .note p{font-weight:600;color:var(--ink-soft);margin-top:4px}
+  .misc{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}
+  @media(max-width:640px){.misc{grid-template-columns:1fr}}
+  .mistake{background:#fff;border:2px solid var(--line);border-radius:14px;padding:14px}
+  .mistake .x{color:var(--melon);font-weight:900}
+  .mistake .ok{color:#16a37a;font-weight:900}
+
+  .footer{text-align:center;color:var(--ink-soft);font-weight:700;font-size:.82rem;margin-top:34px}
+  .kbd{display:inline-block;background:#fff;border:1px solid var(--line);border-radius:6px;padding:1px 7px;font-family:ui-rounded,'Fredoka','Segoe UI Rounded',system-ui,'Trebuchet MS',sans-serif;font-size:.8rem}
+</style>
+</head>
+<body>
+<noscript>
+  <div style="max-width:640px;margin:40px auto;padding:24px;border:2px solid #FF6B6B;border-radius:16px;background:#FFECEC;font-family:system-ui,sans-serif;color:#2D2A5A">
+    <h2 style="margin:0 0 8px">Please open this in a web browser</h2>
+    <p style="font-weight:600;margin:0">This activity needs JavaScript to build the lessons and quizzes. If you are seeing this, you may have opened the file inside a chat or file-preview app. Save the file, then open it with Chrome, Safari, Edge, or Firefox.</p>
+  </div>
+</noscript>
+
+<header>
+  <div class="bar">
+    <div class="logo"><span class="pct">%</span> Percent Playground</div>
+    <div class="stars" id="stars" title="Explore the lessons, master a quiz, and try the word problems to light up all three stars">
+      <span class="star" data-s="0">⭐</span>
+      <span class="star" data-s="1">⭐</span>
+      <span class="star" data-s="2">⭐</span>
+    </div>
+    <nav>
+      <button class="nav-btn active" data-go="learn">📖 Learn</button>
+      <button class="nav-btn" data-go="quiz">🎯 Quiz</button>
+      <button class="nav-btn" data-go="practice">✏️ Practice</button>
+      <button class="nav-btn" data-go="teacher">🍎 Teacher</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<!-- ============ LEARN ============ -->
+<section class="page active" id="learn">
+
+  <div class="hero">
+    <div class="eyebrow">Grade 5 · Chapter 14</div>
+    <h1>What is a<br>Percent?</h1>
+    <p><b>Per-cent</b> is a fancy way to say <b>“out of 100.”</b> The little sign <b>%</b> is just shorthand for the words “per hundred.” If 60% of people voted, that means <b>60 out of every 100</b> people voted.</p>
+    <span class="tag">Tap the grid below to see it! 👇</span>
+  </div>
+
+  <div class="metaphor">
+    <div class="card">
+      <h2>The Hundred Square 🟪</h2>
+      <p class="lead">This big square has exactly <b>100 tiny boxes</b>. Colour some in — the number you colour <i>is</i> the percent!</p>
+      <div class="grid100" id="grid100"></div>
+      <div class="gridtools">
+        <div class="readout" id="gridReadout">0%<small>0 out of 100 boxes</small></div>
+      </div>
+      <div class="gridtools">
+        <span class="chip" data-fill="25">Show 25%</span>
+        <span class="chip" data-fill="50">Show 50%</span>
+        <span class="chip" data-fill="75">Show 75%</span>
+        <span class="chip" data-fill="100">Show 100%</span>
+        <span class="chip" data-fill="0">Clear</span>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Why 100? 🤔</h2>
+      <p class="lead">Because 100 is friendly! It splits neatly and it’s easy to picture.</p>
+      <div class="concept" style="margin-top:14px">
+        <b>The golden rule:</b><br>
+        A percent is a fraction whose <b>bottom number (denominator) is always 100</b>.
+        <div class="math" style="margin-top:10px">
+          78% &nbsp;=&nbsp;
+          <span class="frac"><span class="top">78</span><span class="bot">100</span></span>
+          &nbsp;&nbsp; and &nbsp;&nbsp;
+          <span class="frac"><span class="top">53</span><span class="bot">100</span></span>
+          &nbsp;=&nbsp; 53%
+        </div>
+      </div>
+      <div class="concept">
+        <b>Half a pizza 🍕 = 50%.</b> Cut a pizza into 100 crumbs — half of them is 50 crumbs, which is 50 out of 100 = 50%.
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:34px">
+    <span class="kicker">The 6 Skills</span>
+    <h2>Every percent question is one of these ⬇️</h2>
+  </div>
+
+  <!-- Lessons injected by JS -->
+  <div id="lessons"></div>
+
+</section>
+
+<!-- ============ QUIZ ============ -->
+<section class="page" id="quiz">
+  <div class="section-title"><span class="kicker">Test yourself</span><h2>🎯 The Percent Challenge</h2></div>
+
+  <!-- QUIZ PICKER MENU -->
+  <div id="quizMenu">
+    <p style="font-weight:700;color:var(--ink-soft);margin-bottom:6px">Pick a quiz — there are <b>10 quizzes</b> with <b>10 questions each</b> (100 in all!). Each one gives you a star ⭐ when you score 8 or more.</p>
+    <div class="quiz-menu-grid" id="quizMenuGrid"></div>
+    <div class="menu-total" id="menuTotal"></div>
+  </div>
+
+  <!-- QUIZ RUNNER -->
+  <div class="quiz-card" id="quizCard" style="display:none">
+    <div class="q-meta">
+      <span id="qCount">Question 1 of 10</span>
+      <span class="q-badge" id="qBadge">Skill</span>
+    </div>
+    <div class="progress-track"><div class="progress-bar" id="qProgress"></div></div>
+    <div class="q-text" id="qText"></div>
+    <div class="opts" id="qOpts"></div>
+    <div class="feedback" id="qFeedback"></div>
+    <div class="quiz-foot">
+      <span style="font-weight:900;color:var(--ink-soft)">Score: <span id="qScore">0</span></span>
+      <button class="btn btn-primary" id="qNext" disabled>Next →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PRACTICE ============ -->
+<section class="page" id="practice">
+  <div class="section-title"><span class="kicker">Word problems</span><h2>✏️ Real-Life Percent Puzzles</h2></div>
+  <p style="font-weight:700;color:var(--ink-soft);margin-bottom:18px">Try each one on paper first. Then tap <b>Show me how</b> to check your working.</p>
+  <div class="wp-grid" id="wpGrid"></div>
+</section>
+
+<!-- ============ TEACHER ============ -->
+<section class="page" id="teacher">
+  <div class="section-title"><span class="kicker">For grown-ups</span><h2>🍎 Teaching Notes</h2></div>
+
+  <div class="note">
+    <h3>Start concrete, then abstract</h3>
+    <p>Every abstract rule (“divide by 100”) should be introduced <b>after</b> the hundred-square picture. Let the child colour 30 boxes and <i>see</i> that “30 out of 100” and “30%” are the same thing before writing 30/100.</p>
+  </div>
+  <div class="note">
+    <h3>The one sentence that unlocks everything</h3>
+    <p>“Percent means <b>out of 100</b>.” Ask the child to say it aloud before each problem. To convert a fraction to a percent, we simply <b>rename it so the bottom becomes 100</b>. 4/5 = 80/100 = 80%.</p>
+  </div>
+  <div class="note">
+    <h3>Teach “of” means multiply</h3>
+    <p>When a question says “80% <b>of</b> 15,” the word <b>of</b> is the signal to multiply: (80 ÷ 100) × 15. Highlight the word “of” in yellow every time it appears.</p>
+  </div>
+
+  <h3 style="margin:22px 0 10px;font-size:1.3rem">Common mistakes to watch for 👀</h3>
+  <div class="misc">
+    <div class="mistake"><span class="x">✗ Wrong:</span> Writing 4/5 = 4% (just copying the top number).<br><span class="ok">✓ Fix:</span> Make the bottom 100 first → 80/100 = 80%.</div>
+    <div class="mistake"><span class="x">✗ Wrong:</span> 0.53 = 0.53% (forgetting to move the point).<br><span class="ok">✓ Fix:</span> Multiply by 100 → move the decimal 2 places → 53%.</div>
+    <div class="mistake"><span class="x">✗ Wrong:</span> For “broken eggs”, giving the number instead of a percent, or the wrong base.<br><span class="ok">✓ Fix:</span> Always ask “out of what total?” — that total is the denominator.</div>
+    <div class="mistake"><span class="x">✗ Wrong:</span> Reducing 32% to 32/10 or forgetting to simplify.<br><span class="ok">✓ Fix:</span> 32% = 32/100, then divide top & bottom by 4 → 8/25.</div>
+  </div>
+
+  <h3 style="margin:22px 0 10px;font-size:1.3rem">Quick reference card 🗂️</h3>
+  <div class="card">
+    <div class="math" style="line-height:2.4">
+      Fraction → % : &nbsp; <span class="hl">multiply by 100</span> &nbsp;→&nbsp;
+      <span class="frac"><span class="top">4</span><span class="bot">5</span></span> × 100 = 80%<br>
+      % → Fraction : &nbsp; <span class="hl-g">put over 100 & simplify</span> &nbsp;→&nbsp; 32% =
+      <span class="frac"><span class="top">32</span><span class="bot">100</span></span> =
+      <span class="frac"><span class="top">8</span><span class="bot">25</span></span><br>
+      Decimal → % : &nbsp; <span class="hl-m">move point 2 places right</span> &nbsp;→&nbsp; 0.53 = 53%<br>
+      % → Decimal : &nbsp; move point 2 places left &nbsp;→&nbsp; 20% = 0.2<br>
+      % of a number : &nbsp; (% ÷ 100) × number &nbsp;→&nbsp; 80% of 15 = 12<br>
+      Score as % : &nbsp; (score ÷ total) × 100 &nbsp;→&nbsp; 195/300 × 100 = 65%
+    </div>
+  </div>
+
+  <div class="footer">Made for curious Grade 5 mathematicians · Percent Playground · Tip: press <span class="kbd">←</span> <span class="kbd">→</span> during the quiz.</div>
+</section>
+
+</main>
+
+<script>
+/* ------------------------------------------------------------------ */
+/* NAV                                                                 */
+/* ------------------------------------------------------------------ */
+const pages = document.querySelectorAll('.page');
+const navBtns = document.querySelectorAll('.nav-btn');
+navBtns.forEach(b=>b.addEventListener('click',()=>go(b.dataset.go)));
+function go(id){
+  pages.forEach(p=>p.classList.toggle('active',p.id===id));
+  navBtns.forEach(b=>b.classList.toggle('active',b.dataset.go===id));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* stars progress */
+const seen = new Set();
+function earn(i){
+  seen.add(i);
+  document.querySelectorAll('.stars .star').forEach(s=>{
+    if(seen.has(+s.dataset.s)) s.classList.add('on');
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* HUNDRED GRID                                                        */
+/* ------------------------------------------------------------------ */
+const grid = document.getElementById('grid100');
+const gridReadout = document.getElementById('gridReadout');
+let cells=[];
+for(let i=0;i<100;i++){
+  const c=document.createElement('div');
+  c.className='cell';
+  c.addEventListener('click',()=>{ c.classList.toggle('on'); updateGrid(); earn(0); });
+  grid.appendChild(c); cells.push(c);
+}
+function updateGrid(){
+  const n=cells.filter(c=>c.classList.contains('on')).length;
+  gridReadout.innerHTML = n+'%<small>'+n+' out of 100 boxes</small>';
+}
+document.querySelectorAll('.chip').forEach(ch=>{
+  ch.addEventListener('click',()=>{
+    const f=+ch.dataset.fill;
+    cells.forEach((c,i)=>c.classList.toggle('on', i<f));
+    updateGrid(); earn(0);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* LESSONS DATA                                                        */
+/* ------------------------------------------------------------------ */
+const F=(t,b)=>`<span class="frac"><span class="top">${t}</span><span class="bot">${b}</span></span>`;
+
+const lessons = [
+  {
+    color:'var(--grape)', title:'Percent ↔ Fraction',
+    sub:'“out of 100” both ways',
+    concept:`A percent is just a fraction with <b>100 on the bottom</b>. To turn a percent into a fraction, write it over 100 and then <b>simplify</b> (make the numbers smaller by dividing top and bottom by the same number).`,
+    steps:[
+      'Write the percent over 100.',
+      'Find a number that divides both top and bottom.',
+      'Divide until it will not go smaller — done!'
+    ],
+    worked:`<div class="ex-label">Worked example · from your book</div>
+      <div class="math">Express <span class="hl">32%</span> as a fraction.<br>
+      32% = ${F('32','100')} = ${F('8','25')} &nbsp;<small>(÷4 top &amp; bottom)</small></div>
+      <div class="math" style="margin-top:8px">Going back: ${F('78','100')} = <span class="hl">78%</span></div>`,
+    tryLabel:'Slide to see the fraction',
+    tryType:'fracbar'
+  },
+  {
+    color:'var(--melon)', title:'Fraction → Percent',
+    sub:'when the bottom isn’t 100',
+    concept:`If the denominator is <b>not</b> 100, we <b>multiply the fraction by 100</b> to find the percent. Think: “how many out of 100 would this be?”`,
+    steps:[
+      'Take the fraction.',
+      'Multiply it by 100.',
+      'The answer is your percent (add the % sign).'
+    ],
+    worked:`<div class="ex-label">Worked example · from your book</div>
+      <div class="math">In the fraction ${F('4','5')}, the bottom is <b>not</b> 100.<br>
+      ${F('4','5')} × 100 = ${F('4×20','5×20')} = ${F('80','100')} = <span class="hl-m">80%</span></div>`,
+    tryLabel:'Move the slider — watch the bar fill',
+    tryType:'bar'
+  },
+  {
+    color:'var(--mint)', title:'Percent of a Number',
+    sub:'the word “of” means ×',
+    concept:`When you see “<b>80% of 15</b>”, the word <b>of</b> tells you to multiply. First turn the percent into ÷100, then multiply by the number.`,
+    steps:[
+      'Write the percent as (percent ÷ 100).',
+      'Multiply by the number after “of”.',
+      'Simplify to get your answer.'
+    ],
+    worked:`<div class="ex-label">Worked example · from your book</div>
+      <div class="math">Find <span class="hl-g">80% of 15</span>.<br>
+      = ${F('80','100')} × 15 = ${F('80','100')} × 15 = <b>12</b></div>
+      <div class="math" style="margin-top:8px">So 80 out of every 100 → for 15 things it is 12 things.</div>`,
+    tryLabel:'Pick a percent of 20 apples 🍎',
+    tryType:'ofnum'
+  },
+  {
+    color:'var(--sky)', title:'Marks & Scores as %',
+    sub:'score out of total',
+    concept:`To turn a test score into a percent, divide the <b>score by the total</b>, then multiply by 100. This tells you how you did “out of 100”.`,
+    steps:[
+      'Write score over total (a fraction).',
+      'Multiply by 100.',
+      'That is your percentage!'
+    ],
+    worked:`<div class="ex-label">Worked example · from your book</div>
+      <div class="math">Mahima scored <b>195 out of 300</b>.<br>
+      ${F('195','300')} × 100 = <span class="hl">65%</span></div>
+      <div class="math" style="margin-top:8px">Anil scored <b>905 / 1000</b> → ${F('905','1000')} × 100 = <b>90.5%</b></div>`,
+    tryLabel:'Try your own test score',
+    tryType:'score'
+  },
+  {
+    color:'var(--sun)', title:'Decimal ↔ Percent',
+    sub:'slide the point 2 places',
+    concept:`To change a <b>decimal into a percent</b>, move the decimal point <b>2 places to the right</b> (same as ×100). To go back, move it 2 places <b>left</b>.`,
+    steps:[
+      'Decimal → %: move point 2 right (0.53 → 53%).',
+      'Percent → decimal: move point 2 left (20% → 0.20).',
+      'Add or drop the % sign.'
+    ],
+    worked:`<div class="ex-label">Worked example · from your book</div>
+      <div class="math"><b>0.53</b> = ${F('53','100')} = <span class="hl">53%</span><br>
+      <b>0.2</b> = ${F('2','10')} = ${F('20','100')} = <span class="hl-m">20%</span></div>`,
+    tryLabel:'Type a decimal (0 to 1)',
+    tryType:'decimal'
+  },
+  {
+    color:'#e8590c', title:'Percent Word Problems',
+    sub:'eggs, alloys, prices…',
+    concept:`Real problems hide a percent inside a story. The trick: find the <b>total (the “out of”)</b> and the <b>part</b>. Broken eggs, copper in an alloy, price rises — all the same idea.`,
+    steps:[
+      'Read carefully: what is the TOTAL?',
+      'What PART are we talking about?',
+      'Use (part ÷ total) × 100, or (% ÷ 100) × total.'
+    ],
+    worked:`<div class="ex-label">Worked example · from your book</div>
+      <div class="math">A man bought <b>700 eggs</b>; <span class="hl-g">20% were broken</span>. How many broke?<br>
+      = ${F('20','100')} × 700 = <b>140 eggs</b></div>
+      <div class="math" style="margin-top:8px">Alloy is <b>70% copper</b>, rest zinc, total 50 kg.<br>
+      Zinc = 30% of 50 = ${F('30','100')}×50 = <b>15 kg</b></div>`,
+    tryLabel:'',
+    tryType:'none'
+  }
+];
+
+const lessonsWrap = document.getElementById('lessons');
+lessons.forEach((L,idx)=>{
+  const el=document.createElement('div');
+  el.className='lesson';
+  el.innerHTML=`
+    <div class="lesson-head">
+      <div class="l-num" style="background:${L.color}">${idx+1}</div>
+      <div style="flex:1">
+        <div class="l-title">${L.title}</div>
+        <div class="l-sub">${L.sub}</div>
+      </div>
+      <div class="caret">›</div>
+    </div>
+    <div class="lesson-body"><div class="lb-inner">
+      <div class="concept">${L.concept}</div>
+      <div class="steps">${L.steps.map(s=>`<div class="step"><div class="n"></div><p>${s}</p></div>`).join('')}</div>
+      <div class="worked">${L.worked}</div>
+      ${L.tryType!=='none'?`<div class="tryit"><div class="ti-head">🧪 Try it — ${L.tryLabel}</div><div id="try-${idx}"></div></div>`:''}
+    </div></div>`;
+  lessonsWrap.appendChild(el);
+  const head=el.querySelector('.lesson-head');
+  head.addEventListener('click',()=>{ el.classList.toggle('open'); earn(0); });
+});
+// open the first lesson by default
+lessonsWrap.querySelector('.lesson').classList.add('open');
+
+/* ------- interactive try-it widgets ------- */
+function mountTry(idx,html){ const el=document.getElementById('try-'+idx); if(el) el.innerHTML=html; }
+try{
+
+// 0: fraction bar (percent -> simplified fraction picture)
+mountTry(0,`
+  <div class="slider-row">
+    <input type="range" min="0" max="100" value="40" id="t0">
+    <div class="readout" id="t0out"></div>
+  </div>
+  <div class="bar-viz"><div class="bar-fill" id="t0bar"></div></div>`);
+function gcd(a,b){return b?gcd(b,a%b):a}
+const t0=document.getElementById('t0');
+function up0(){
+  const v=+t0.value, g=gcd(v,100)||1;
+  document.getElementById('t0bar').style.width=v+'%';
+  document.getElementById('t0bar').textContent=v+'%';
+  document.getElementById('t0out').innerHTML = v+'% = '+F(v,100)+(g>1?' = '+F(v/g,100/g):'');
+}
+t0.addEventListener('input',up0); up0();
+
+// 1: bar fill for fraction->percent (denominators)
+mountTry(1,`
+  <div class="slider-row">
+    <label style="font-weight:800">Top:</label>
+    <input type="range" min="0" max="8" value="4" id="t1n" style="max-width:120px">
+    <label style="font-weight:800">Bottom:</label>
+    <input type="range" min="1" max="8" value="5" id="t1d" style="max-width:120px">
+    <div class="readout" id="t1out"></div>
+  </div>
+  <div class="bar-viz"><div class="bar-fill" id="t1bar"></div></div>`);
+const t1n=document.getElementById('t1n'), t1d=document.getElementById('t1d');
+function up1(){
+  let n=+t1n.value, d=+t1d.value; if(n>d){n=d;t1n.value=d;}
+  const pct=Math.round(n/d*100);
+  document.getElementById('t1bar').style.width=pct+'%';
+  document.getElementById('t1bar').textContent=pct+'%';
+  document.getElementById('t1out').innerHTML=F(n,d)+' × 100 = <b>'+pct+'%</b>';
+}
+t1n.addEventListener('input',up1); t1d.addEventListener('input',up1); up1();
+
+// 2: % of 20 apples
+mountTry(2,`
+  <div class="slider-row">
+    <input type="range" min="0" max="100" step="5" value="25" id="t2">
+    <div class="readout" id="t2out"></div>
+  </div>
+  <div id="t2apples" style="font-size:1.5rem;line-height:1.6;margin-top:8px"></div>`);
+const t2=document.getElementById('t2');
+function up2(){
+  const p=+t2.value, count=Math.round(p/100*20);
+  document.getElementById('t2out').innerHTML=p+'% of 20 = <b>'+count+'</b> apples';
+  let s='';
+  for(let i=0;i<20;i++) s+= i<count?'🍎':'⚪';
+  document.getElementById('t2apples').textContent=s;
+}
+t2.addEventListener('input',up2); up2();
+
+// 3: score -> percent
+mountTry(3,`
+  <div class="slider-row">
+    <label style="font-weight:800">Score:</label>
+    <input type="range" min="0" max="50" value="39" id="t3s" style="max-width:150px">
+    <label style="font-weight:800">Total:</label>
+    <input type="range" min="10" max="50" value="50" id="t3t" style="max-width:150px">
+    <div class="readout" id="t3out"></div>
+  </div>
+  <div class="bar-viz"><div class="bar-fill" id="t3bar"></div></div>`);
+const t3s=document.getElementById('t3s'), t3t=document.getElementById('t3t');
+function up3(){
+  let s=+t3s.value, tt=+t3t.value; if(s>tt){s=tt;t3s.value=tt;}
+  const pct=Math.round(s/tt*1000)/10;
+  document.getElementById('t3bar').style.width=pct+'%';
+  document.getElementById('t3bar').textContent=pct+'%';
+  document.getElementById('t3out').innerHTML=F(s,tt)+' × 100 = <b>'+pct+'%</b>';
+}
+t3s.addEventListener('input',up3); t3t.addEventListener('input',up3); up3();
+
+// 4: decimal -> percent
+mountTry(4,`
+  <div class="slider-row">
+    <input type="range" min="0" max="100" value="53" id="t4">
+    <div class="readout" id="t4out"></div>
+  </div>
+  <div class="bar-viz"><div class="bar-fill" id="t4bar"></div></div>`);
+const t4=document.getElementById('t4');
+function up4(){
+  const v=+t4.value, dec=(v/100).toFixed(2);
+  document.getElementById('t4bar').style.width=v+'%';
+  document.getElementById('t4bar').textContent=v+'%';
+  document.getElementById('t4out').innerHTML='<b>'+dec+'</b> → move point 2 right → <b>'+v+'%</b>';
+}
+t4.addEventListener('input',up4); up4();
+}catch(err){ /* widgets are enhancement-only; lessons already rendered */ }
+
+/* ------------------------------------------------------------------ */
+/* QUIZ                                                                */
+/* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------ */
+/* QUIZZES — 10 quizzes × 10 questions = 100                          */
+/* ------------------------------------------------------------------ */
+const QUIZZES=[{"id": 1, "title": "Percent → Fraction", "icon": "🧩", "color": "var(--grape)", "desc": "Turn percents into simplest fractions", "questions": [{"q": "Express 32% as a fraction in simplest form.", "o": ["32/10", "8/25", "16/50", "3/2"], "a": 1, "why": "32% = 32/100. Divide top & bottom by 4 → 8/25."}, {"q": "Express 64% as a fraction in simplest form.", "o": ["16/25", "64/10", "32/50", "6/4"], "a": 0, "why": "64% = 64/100. Divide by 4 → 16/25."}, {"q": "Express 25% as a fraction in simplest form.", "o": ["1/2", "1/5", "1/4", "2/5"], "a": 2, "why": "25% = 25/100 = 1/4."}, {"q": "Express 50% as a fraction in simplest form.", "o": ["1/5", "1/2", "2/3", "1/4"], "a": 1, "why": "50% = 50/100 = 1/2."}, {"q": "Express 10% as a fraction in simplest form.", "o": ["1/5", "1/20", "1/10", "1/100"], "a": 2, "why": "10% = 10/100 = 1/10."}, {"q": "Express 75% as a fraction in simplest form.", "o": ["3/4", "7/10", "3/5", "5/8"], "a": 0, "why": "75% = 75/100 = 3/4."}, {"q": "Express 20% as a fraction in simplest form.", "o": ["1/4", "1/5", "2/5", "1/2"], "a": 1, "why": "20% = 20/100 = 1/5."}, {"q": "Express 40% as a fraction in simplest form.", "o": ["4/10", "2/5", "1/4", "4/5"], "a": 1, "why": "40% = 40/100 = 2/5."}, {"q": "Express 5% as a fraction in simplest form.", "o": ["1/20", "1/5", "5/10", "1/50"], "a": 0, "why": "5% = 5/100 = 1/20."}, {"q": "Express 80% as a fraction in simplest form.", "o": ["8/10", "3/4", "4/5", "5/6"], "a": 2, "why": "80% = 80/100 = 4/5."}]}, {"id": 2, "title": "Fraction → Percent", "icon": "🔁", "color": "var(--melon)", "desc": "Rename fractions as percents", "questions": [{"q": "Write 4/5 as a percentage.", "o": ["45%", "54%", "80%", "40%"], "a": 2, "why": "4/5 × 100 = 80%."}, {"q": "Write 1/2 as a percentage.", "o": ["25%", "50%", "20%", "5%"], "a": 1, "why": "1/2 × 100 = 50%."}, {"q": "Write 3/4 as a percentage.", "o": ["34%", "75%", "43%", "70%"], "a": 1, "why": "3/4 × 100 = 75%."}, {"q": "Write 1/5 as a percentage.", "o": ["15%", "50%", "20%", "25%"], "a": 2, "why": "1/5 × 100 = 20%."}, {"q": "Write 2/5 as a percentage.", "o": ["25%", "40%", "20%", "45%"], "a": 1, "why": "2/5 × 100 = 40%."}, {"q": "Write 1/4 as a percentage.", "o": ["14%", "40%", "25%", "20%"], "a": 2, "why": "1/4 × 100 = 25%."}, {"q": "Write 3/5 as a percentage.", "o": ["35%", "60%", "30%", "53%"], "a": 1, "why": "3/5 × 100 = 60%."}, {"q": "Write 1/10 as a percentage.", "o": ["1%", "100%", "10%", "110%"], "a": 2, "why": "1/10 × 100 = 10%."}, {"q": "Write 7/10 as a percentage.", "o": ["70%", "7%", "17%", "77%"], "a": 0, "why": "7/10 × 100 = 70%."}, {"q": "Write 9/10 as a percentage.", "o": ["9%", "90%", "19%", "99%"], "a": 1, "why": "9/10 × 100 = 90%."}]}, {"id": 3, "title": "Percent of a Number", "icon": "✳️", "color": "var(--mint)", "desc": "The word “of” means multiply", "questions": [{"q": "What is 80% of 15?", "o": ["8", "12", "15", "20"], "a": 1, "why": "80/100 × 15 = 12."}, {"q": "What is 60% of 60?", "o": ["30", "36", "40", "66"], "a": 1, "why": "60/100 × 60 = 36."}, {"q": "What is 50% of 700?", "o": ["70", "350", "500", "700"], "a": 1, "why": "50/100 × 700 = 350."}, {"q": "What is 30% of 200?", "o": ["6", "30", "60", "20"], "a": 2, "why": "30/100 × 200 = 60."}, {"q": "What is 10% of 250?", "o": ["25", "250", "2.5", "50"], "a": 0, "why": "10/100 × 250 = 25."}, {"q": "What is 25% of 80?", "o": ["20", "25", "40", "16"], "a": 0, "why": "25/100 × 80 = 20."}, {"q": "What is 20% of 400?", "o": ["40", "80", "20", "200"], "a": 1, "why": "20/100 × 400 = 80."}, {"q": "What is 90% of 20?", "o": ["9", "2", "18", "20"], "a": 2, "why": "90/100 × 20 = 18."}, {"q": "What is 5% of 200?", "o": ["5", "20", "10", "50"], "a": 2, "why": "5/100 × 200 = 10."}, {"q": "What is 100% of 45?", "o": ["0", "45", "100", "4.5"], "a": 1, "why": "100% of anything is the whole thing = 45."}]}, {"id": 4, "title": "Marks & Scores", "icon": "📝", "color": "var(--sky)", "desc": "Turn a score out of a total into %", "questions": [{"q": "Mahima scored 195 out of 300. Her percentage is…", "o": ["60%", "65%", "70%", "75%"], "a": 1, "why": "195/300 × 100 = 65%."}, {"q": "Anil scored 905 out of 1000. His percentage is…", "o": ["90%", "90.5%", "95%", "9.05%"], "a": 1, "why": "905/1000 × 100 = 90.5%."}, {"q": "Rashmi scored 72 out of 100. Her percentage is…", "o": ["7.2%", "27%", "72%", "82%"], "a": 2, "why": "72/100 × 100 = 72%."}, {"q": "A student scored 45 out of 50. Percentage?", "o": ["45%", "90%", "95%", "50%"], "a": 1, "why": "45/50 × 100 = 90%."}, {"q": "A student scored 18 out of 20. Percentage?", "o": ["80%", "18%", "90%", "95%"], "a": 2, "why": "18/20 × 100 = 90%."}, {"q": "A student scored 30 out of 40. Percentage?", "o": ["70%", "75%", "30%", "80%"], "a": 1, "why": "30/40 × 100 = 75%."}, {"q": "A student scored 12 out of 25. Percentage?", "o": ["24%", "12%", "48%", "50%"], "a": 2, "why": "12/25 × 100 = 48%."}, {"q": "A student scored 40 out of 80. Percentage?", "o": ["40%", "50%", "80%", "60%"], "a": 1, "why": "40/80 × 100 = 50%."}, {"q": "A student scored 21 out of 30. Percentage?", "o": ["70%", "21%", "63%", "75%"], "a": 0, "why": "21/30 × 100 = 70%."}, {"q": "A student scored 9 out of 10. Percentage?", "o": ["9%", "19%", "90%", "99%"], "a": 2, "why": "9/10 × 100 = 90%."}]}, {"id": 5, "title": "Decimals & Percents", "icon": "🔟", "color": "var(--sun)", "desc": "Slide the decimal point two places", "questions": [{"q": "Convert 0.53 into a percentage.", "o": ["5.3%", "0.53%", "53%", "530%"], "a": 2, "why": "Move point 2 right: 0.53 → 53%."}, {"q": "Convert 0.2 into a percentage.", "o": ["2%", "20%", "0.2%", "200%"], "a": 1, "why": "0.2 = 0.20 → 20%."}, {"q": "Convert 20% into a decimal.", "o": ["2.0", "0.2", "0.02", "20.0"], "a": 1, "why": "Move point 2 left: 20% → 0.20 = 0.2."}, {"q": "Convert 0.75 into a percentage.", "o": ["7.5%", "750%", "0.75%", "75%"], "a": 3, "why": "0.75 → 75%."}, {"q": "Convert 50% into a decimal.", "o": ["5.0", "0.5", "0.05", "50.0"], "a": 1, "why": "50% → 0.50 = 0.5."}, {"q": "Convert 0.05 into a percentage.", "o": ["5%", "0.5%", "50%", "0.05%"], "a": 0, "why": "0.05 → 5%."}, {"q": "Convert 0.1 into a percentage.", "o": ["1%", "0.1%", "100%", "10%"], "a": 3, "why": "0.1 = 0.10 → 10%."}, {"q": "Convert 8% into a decimal.", "o": ["0.8", "0.08", "8.0", "0.008"], "a": 1, "why": "8% → 0.08."}, {"q": "Convert 0.9 into a percentage.", "o": ["9%", "0.9%", "90%", "900%"], "a": 2, "why": "0.9 = 0.90 → 90%."}, {"q": "Convert 100% into a decimal.", "o": ["1.0", "0.1", "10.0", "0.01"], "a": 0, "why": "100% → 1.0."}]}, {"id": 6, "title": "Broken & Leftover", "icon": "🥚", "color": "#e8590c", "desc": "How much broke, how much is left", "questions": [{"q": "A man bought 700 eggs and 20% broke. How many broke?", "o": ["70", "140", "200", "350"], "a": 1, "why": "20/100 × 700 = 140."}, {"q": "Of 700 eggs, 20% broke. How many were still good?", "o": ["560", "140", "600", "500"], "a": 0, "why": "700 − 140 = 560 good."}, {"q": "A box has 200 apples; 10% are rotten. How many rotten?", "o": ["10", "20", "30", "2"], "a": 1, "why": "10/100 × 200 = 20."}, {"q": "Of 50 glasses, 40% cracked. How many cracked?", "o": ["20", "40", "10", "25"], "a": 0, "why": "40/100 × 50 = 20."}, {"q": "A farmer had 500 mangoes; 30% spoiled. How many spoiled?", "o": ["50", "150", "300", "100"], "a": 1, "why": "30/100 × 500 = 150."}, {"q": "Of 80 bottles, 25% leaked. How many leaked?", "o": ["20", "25", "16", "40"], "a": 0, "why": "25/100 × 80 = 20."}, {"q": "A shop had 400 cups; 5% broke. How many broke?", "o": ["4", "40", "20", "25"], "a": 2, "why": "5/100 × 400 = 20."}, {"q": "Of 120 plates, 50% chipped. How many chipped?", "o": ["50", "60", "70", "24"], "a": 1, "why": "50/100 × 120 = 60."}, {"q": "A crate has 250 oranges; 8% are bad. How many are bad?", "o": ["25", "8", "20", "16"], "a": 2, "why": "8/100 × 250 = 20."}, {"q": "Of 1000 tiles, 2% cracked. How many cracked?", "o": ["2", "20", "200", "10"], "a": 1, "why": "2/100 × 1000 = 20."}]}, {"id": 7, "title": "Mixtures & Alloys", "icon": "⚙️", "color": "var(--grape)", "desc": "Copper, zinc and other mixes", "questions": [{"q": "An alloy of 50 kg is 70% copper, rest zinc. How much zinc?", "o": ["15 kg", "30 kg", "35 kg", "50 kg"], "a": 0, "why": "Zinc = 30% of 50 = 15 kg."}, {"q": "An alloy of 50 kg is 70% copper. How much copper?", "o": ["15 kg", "35 kg", "30 kg", "70 kg"], "a": 1, "why": "70/100 × 50 = 35 kg."}, {"q": "A 150 kg alloy is 60% copper. How much copper?", "o": ["60 kg", "90 kg", "150 kg", "40 kg"], "a": 1, "why": "60/100 × 150 = 90 kg."}, {"q": "A 150 kg alloy is 60% copper, rest zinc. How much zinc?", "o": ["90 kg", "60 kg", "40 kg", "100 kg"], "a": 1, "why": "Zinc = 40% of 150 = 60 kg."}, {"q": "A drink is 25% juice in 200 mL. How much juice?", "o": ["25 mL", "50 mL", "75 mL", "100 mL"], "a": 1, "why": "25/100 × 200 = 50 mL."}, {"q": "A 40 kg mix is 10% salt. How much salt?", "o": ["4 kg", "10 kg", "8 kg", "14 kg"], "a": 0, "why": "10/100 × 40 = 4 kg."}, {"q": "Concrete is 20% cement in 500 kg. How much cement?", "o": ["50 kg", "100 kg", "200 kg", "20 kg"], "a": 1, "why": "20/100 × 500 = 100 kg."}, {"q": "A 60 kg alloy is 75% gold. How much gold?", "o": ["45 kg", "30 kg", "15 kg", "75 kg"], "a": 0, "why": "75/100 × 60 = 45 kg."}, {"q": "Milk mix is 5% cream in 400 mL. How much cream?", "o": ["5 mL", "40 mL", "20 mL", "10 mL"], "a": 2, "why": "5/100 × 400 = 20 mL."}, {"q": "A 250 g alloy is 40% silver. How much silver?", "o": ["100 g", "40 g", "150 g", "25 g"], "a": 0, "why": "40/100 × 250 = 100 g."}]}, {"id": 8, "title": "Prices Up & Down", "icon": "🏷️", "color": "var(--sky)", "desc": "Increases, discounts and fares", "questions": [{"q": "A ₹100 toy rises 20%. New price?", "o": ["₹80", "₹120", "₹20", "₹200"], "a": 1, "why": "100 + 20% of 100 = 120."}, {"q": "A ₹200 bag has 10% off. Sale price?", "o": ["₹190", "₹180", "₹20", "₹210"], "a": 1, "why": "200 − 20 = 180."}, {"q": "A ₹500 fare rises 20%. New fare?", "o": ["₹520", "₹600", "₹400", "₹100"], "a": 1, "why": "500 + 100 = 600."}, {"q": "A ₹50 book has 50% off. Sale price?", "o": ["₹25", "₹50", "₹0", "₹75"], "a": 0, "why": "50% of 50 = 25 off → 25."}, {"q": "A ₹1000 phone rises 5%. New price?", "o": ["₹1005", "₹1500", "₹1050", "₹950"], "a": 2, "why": "1000 + 50 = 1050."}, {"q": "A ₹80 shirt has 25% off. Sale price?", "o": ["₹60", "₹20", "₹55", "₹100"], "a": 0, "why": "25% of 80 = 20 off → 60."}, {"q": "A ₹300 fare rises 10%. New fare?", "o": ["₹330", "₹310", "₹270", "₹400"], "a": 0, "why": "300 + 30 = 330."}, {"q": "A ₹400 shoe has 30% off. Sale price?", "o": ["₹120", "₹280", "₹370", "₹300"], "a": 1, "why": "30% of 400 = 120 off → 280."}, {"q": "A ₹250 cost rises 40%. New cost?", "o": ["₹290", "₹350", "₹150", "₹100"], "a": 1, "why": "250 + 100 = 350."}, {"q": "A ₹600 item has 20% off. Sale price?", "o": ["₹480", "₹580", "₹120", "₹500"], "a": 0, "why": "20% of 600 = 120 off → 480."}]}, {"id": 9, "title": "Find the Whole", "icon": "🔎", "color": "var(--melon)", "desc": "Work backwards to the total", "questions": [{"q": "50% of a number is 20. The number is…", "o": ["10", "40", "30", "25"], "a": 1, "why": "20 is half, so the number = 40."}, {"q": "10% of a number is 5. The number is…", "o": ["50", "15", "500", "0.5"], "a": 0, "why": "5 × 10 = 50."}, {"q": "25% of a number is 10. The number is…", "o": ["40", "20", "35", "2.5"], "a": 0, "why": "10 × 4 = 40."}, {"q": "20% of a number is 8. The number is…", "o": ["16", "40", "28", "4"], "a": 1, "why": "8 × 5 = 40."}, {"q": "This year a fare is ₹240 after a 20% rise. Last year it was…", "o": ["₹200", "₹220", "₹192", "₹300"], "a": 0, "why": "240 ÷ 1.2 = 200."}, {"q": "100% of a number is 37. The number is…", "o": ["3.7", "370", "37", "0.37"], "a": 2, "why": "100% is the whole thing = 37."}, {"q": "50% of a number is 45. The number is…", "o": ["45", "90", "22.5", "95"], "a": 1, "why": "45 × 2 = 90."}, {"q": "5% of a number is 4. The number is…", "o": ["20", "40", "80", "9"], "a": 2, "why": "4 × 20 = 80."}, {"q": "30% of a number is 60. The number is…", "o": ["90", "200", "180", "30"], "a": 1, "why": "60 ÷ 30 × 100 = 200."}, {"q": "Solve: x + (10x ÷ 100) = 110. Find x.", "o": ["11", "100", "121", "90"], "a": 1, "why": "1.1x = 110 → x = 100."}]}, {"id": 10, "title": "Mixed Challenge", "icon": "🏆", "color": "var(--sun)", "desc": "A bit of everything — final boss!", "questions": [{"q": "Express 53/100 as a percentage.", "o": ["5.3%", "53%", "0.53%", "530%"], "a": 1, "why": "Denominator is 100, so 53/100 = 53%."}, {"q": "What is 90% of 20?", "o": ["9", "2", "18", "20"], "a": 2, "why": "90/100 × 20 = 18."}, {"q": "Convert 0.61 into a percentage.", "o": ["6.1%", "61%", "0.61%", "610%"], "a": 1, "why": "0.61 → 61%."}, {"q": "Write 16/25 as a percentage.", "o": ["16%", "25%", "64%", "40%"], "a": 2, "why": "16/25 × 100 = 64%."}, {"q": "A 50 kg alloy is 70% copper. Zinc = ?", "o": ["35 kg", "15 kg", "30 kg", "20 kg"], "a": 1, "why": "Zinc = 30% of 50 = 15 kg."}, {"q": "Ramesh scored 93 and 56 (out of 100 each). Overall % of 200?", "o": ["74.5%", "149%", "70%", "80%"], "a": 0, "why": "149/200 × 100 = 74.5%."}, {"q": "Express 6/50 as a percentage.", "o": ["6%", "50%", "12%", "3%"], "a": 2, "why": "6/50 × 100 = 12%."}, {"q": "What is 15% of 40?", "o": ["6", "4", "15", "10"], "a": 0, "why": "15/100 × 40 = 6."}, {"q": "A ₹500 fare rises 20%. New fare?", "o": ["₹520", "₹600", "₹700", "₹550"], "a": 1, "why": "500 + 100 = 600."}, {"q": "Express 20/50 as a percentage.", "o": ["20%", "50%", "40%", "25%"], "a": 2, "why": "20/50 × 100 = 40%."}]}];
+
+const $ = id => document.getElementById(id);
+const bestScores = {}; // quizId -> best score this session
+
+/* ---- build the picker menu ---- */
+function renderMenu(){
+  const grid=$('quizMenuGrid'); grid.innerHTML='';
+  QUIZZES.forEach(qz=>{
+    const done = bestScores[qz.id]!==undefined && bestScores[qz.id]>=8;
+    const bestTxt = bestScores[qz.id]!==undefined ? `Best: ${bestScores[qz.id]}/10` : '10 questions';
+    const el=document.createElement('button');
+    el.className='qmenu'+(done?' done':'');
+    el.innerHTML=`
+      <div class="q-ico" style="background:${qz.color}">${qz.icon}</div>
+      <div class="q-body">
+        <div class="q-name">Quiz ${qz.id}: ${qz.title}</div>
+        <div class="q-desc">${qz.desc}</div>
+        <div class="q-tag"><span class="best">${bestTxt}</span></div>
+      </div>
+      <div class="q-star">⭐</div>`;
+    el.addEventListener('click',()=>startQuiz(qz.id));
+    grid.appendChild(el);
+  });
+  // total progress
+  const solved=Object.values(bestScores).reduce((a,b)=>a+b,0);
+  const stars=QUIZZES.filter(q=>bestScores[q.id]>=8).length;
+  $('menuTotal').innerHTML=`⭐ ${stars} of 10 quizzes mastered · ${solved} of 100 points earned
+    <div class="bar"><span style="width:${solved}%"></span></div>`;
+}
+
+/* ---- quiz runner state ---- */
+let curQuiz=null, qi=0, score=0, locked=false;
+
+function startQuiz(id){
+  curQuiz=QUIZZES.find(q=>q.id===id);
+  qi=0; score=0; locked=false;
+  $('quizMenu').style.display='none';
+  $('quizCard').style.display='block';
+  // rebuild the card in case a result screen replaced its innards
+  $('quizCard').innerHTML=`
+    <div class="q-meta">
+      <button class="btn btn-ghost" style="padding:6px 14px;font-size:.85rem" onclick="backToMenu()">← All quizzes</button>
+      <span class="q-badge" id="qBadge"></span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+      <span id="qCount" style="font-weight:800;color:var(--ink-soft);font-size:.85rem"></span>
+    </div>
+    <div class="progress-track"><div class="progress-bar" id="qProgress"></div></div>
+    <div class="q-text" id="qText"></div>
+    <div class="opts" id="qOpts"></div>
+    <div class="feedback" id="qFeedback"></div>
+    <div class="quiz-foot">
+      <span style="font-weight:900;color:var(--ink-soft)">Score: <span id="qScore">0</span></span>
+      <button class="btn btn-primary" id="qNext" disabled>Next →</button>
+    </div>`;
+  renderQ();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function backToMenu(){
+  curQuiz=null;
+  $('quizCard').style.display='none';
+  $('quizMenu').style.display='block';
+  renderMenu();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function renderQ(){
+  if(!curQuiz) return;
+  locked=false;
+  const list=curQuiz.questions;
+  const item=list[qi];
+  $('qCount').textContent=`Quiz ${curQuiz.id} · Question ${qi+1} of ${list.length}`;
+  $('qBadge').textContent=curQuiz.title;
+  $('qProgress').style.width=(qi/list.length*100)+'%';
+  $('qText').textContent=item.q;
+  $('qFeedback').className='feedback';
+  $('qNext').disabled=true;
+  $('qNext').textContent = qi===list.length-1 ? 'See results 🎉' : 'Next →';
+  const qOpts=$('qOpts'); qOpts.innerHTML='';
+  const keys=['A','B','C','D'];
+  item.o.forEach((opt,i)=>{
+    const b=document.createElement('button');
+    b.className='opt';
+    b.innerHTML=`<span class="key">${keys[i]}</span><span>${opt}</span>`;
+    b.addEventListener('click',()=>choose(i,b));
+    qOpts.appendChild(b);
+  });
+}
+
+function choose(i,btn){
+  if(locked) return; locked=true;
+  const item=curQuiz.questions[qi];
+  const all=$('qOpts').querySelectorAll('.opt');
+  all.forEach(o=>o.classList.add('disabled'));
+  const fb=$('qFeedback');
+  if(i===item.a){
+    btn.classList.add('correct'); score++; $('qScore').textContent=score;
+    fb.className='feedback show good';
+    fb.innerHTML='✅ Correct! '+item.why;
+  }else{
+    btn.classList.add('wrong');
+    all[item.a].classList.add('correct');
+    fb.className='feedback show bad';
+    fb.innerHTML='❌ Not quite. '+item.why;
+  }
+  $('qNext').disabled=false;
+}
+
+document.addEventListener('click',e=>{
+  if(e.target && e.target.id==='qNext'){
+    if(qi<curQuiz.questions.length-1){ qi++; renderQ(); }
+    else showResult();
+  }
+});
+
+function showResult(){
+  const total=curQuiz.questions.length;
+  // record best
+  if(bestScores[curQuiz.id]===undefined || score>bestScores[curQuiz.id]) bestScores[curQuiz.id]=score;
+  if(score>=8) earn(1);
+  const pct=Math.round(score/total*100);
+  let medal='🌟',msg='Good try — tap Play again to beat your score!';
+  if(pct>=90){medal='🏆';msg='Percent Champion! Outstanding work!';}
+  else if(pct>=70){medal='🥇';msg='Great job! You really know this one.';}
+  else if(pct>=50){medal='🥈';msg='Nice work! A little more practice and you’ve got it.';}
+  const nextQuiz = QUIZZES.find(q=>q.id===curQuiz.id+1);
+  $('quizCard').innerHTML=`<div class="result">
+    <div class="medal">${medal}</div>
+    <div class="big">${score}/${total}</div>
+    <p style="font-weight:800;font-size:1.15rem;margin:6px 0 4px">${pct}% · Quiz ${curQuiz.id}: ${curQuiz.title}</p>
+    <p style="font-weight:700;color:var(--ink-soft);max-width:36ch;margin:0 auto 18px">${msg}</p>
+    <button class="btn btn-primary" onclick="startQuiz(${curQuiz.id})">Play again 🔄</button>
+    ${nextQuiz?`<button class="btn btn-primary" style="background:var(--mint)" onclick="startQuiz(${nextQuiz.id})">Next quiz: ${nextQuiz.title} →</button>`:''}
+    <button class="btn btn-ghost" onclick="backToMenu()">← All quizzes</button>
+  </div>`;
+}
+
+// keyboard support (only while a quiz is running)
+document.addEventListener('keydown',e=>{
+  if(!$('quiz').classList.contains('active') || !curQuiz) return;
+  const nextBtn=$('qNext');
+  if(e.key==='ArrowRight' && nextBtn && !nextBtn.disabled) nextBtn.click();
+  if(['1','2','3','4'].includes(e.key)){
+    const opts=$('qOpts'); if(opts){const b=opts.querySelectorAll('.opt')[+e.key-1]; if(b) b.click();}
+  }
+});
+
+renderMenu();
+
+
+/* ------------------------------------------------------------------ */
+/* PRACTICE / WORD PROBLEMS                                            */
+/* ------------------------------------------------------------------ */
+const WP=[
+  {icon:'🥚', title:'The Broken Eggs',
+   p:'A shopkeeper bought 700 eggs. On the way, 20% of them broke. How many eggs were still good to sell?',
+   a:`Broken = 20% of 700 = ${F('20','100')} × 700 = <b>140 eggs</b>.<br>Good eggs = 700 − 140 = <b>560 eggs</b>.`},
+  {icon:'⚙️', title:'The Metal Mix (Alloy)',
+   p:'An alloy weighs 50 kg. It is 70% copper and the rest is zinc. How many kilograms of zinc are in it?',
+   a:`Zinc is the “rest” = 100% − 70% = 30%.<br>Zinc = ${F('30','100')} × 50 = <b>15 kg</b>.`},
+  {icon:'🚌', title:'The Bus Fare Rise',
+   p:'This year a bus fare is ₹2,40,000 after a 20% increase over last year. What was last year’s fare?',
+   a:`This year = last year + 20% = 120% of last year.<br>Last year = ${F('2,40,000','120')} × 100 = <b>₹2,00,000</b>.`},
+  {icon:'📝', title:'Two Test Scores',
+   p:'Ramesh scored 93 out of 100 in Marathi and 56 out of 100 in Maths and Science together (max 100). What is his overall % of marks?',
+   a:`Total scored = 93 + 56 = 149 out of 200.<br>${F('149','200')} × 100 = <b>74.5%</b>.`},
+  {icon:'🏫', title:'Rashmi’s Report Card',
+   p:'Rashmi scored 72/100 in English, 96/100 in Marathi, and 75/100 in Maths. What is her overall percentage?',
+   a:`Total = 72 + 96 + 75 = 243 out of 300.<br>${F('243','300')} × 100 = <b>81%</b>.`},
+  {icon:'🍫', title:'Copper Alloy Puzzle',
+   p:'An alloy contains 60% copper and the rest zinc. If there are 150 kg of alloy, how much copper and how much zinc?',
+   a:`Copper = 60% of 150 = ${F('60','100')}×150 = <b>90 kg</b>.<br>Zinc = 40% of 150 = <b>60 kg</b>.`},
+  {icon:'🔢', title:'Find the Missing Number',
+   p:'Solve:  x + (10x ÷ 100) = 110.  Find x.',
+   a:`x + 0.1x = 110 → 1.1x = 110 → x = ${F('110','1.1')} = <b>100</b>.`},
+  {icon:'🧮', title:'Evaluate the Expression',
+   p:'Work out: 50% of 700 + 30% of 200.',
+   a:`50% of 700 = 350.  30% of 200 = 60.<br>Sum = 350 + 60 = <b>410</b>.`}
+];
+const wpGrid=document.getElementById('wpGrid');
+WP.forEach((w,i)=>{
+  const el=document.createElement('div');
+  el.className='wp';
+  el.innerHTML=`<div class="icon">${w.icon}</div>
+    <h3>${w.title}</h3>
+    <p>${w.p}</p>
+    <button class="reveal-btn">Show me how ✨</button>
+    <div class="answer"><div class="math">${w.a}</div></div>`;
+  const btn=el.querySelector('.reveal-btn'), ans=el.querySelector('.answer');
+  btn.addEventListener('click',()=>{
+    ans.classList.toggle('show');
+    btn.textContent = ans.classList.contains('show')?'Hide working 🙈':'Show me how ✨';
+    earn(2);
+  });
+  wpGrid.appendChild(el);
+});
+</script>
+</body>
+</html>
